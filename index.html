@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Audit – Conformité Normative</title>
+<style>
+  :root {
+    /* Accent dynamique – surchargé par JS selon la norme */
+    --accent:       #1D9E75;
+    --accent-dark:  #157a5a;
+    --accent-light: #e8f7f2;
+    --accent-mid:   #b2e4d4;
+    --accent-grad:  #2dd4a0;
+    /* Statuts */
+    --orange: #f59e0b;
+    --red: #ef4444;
+    /* Gris */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --radius: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-700);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
+    color: #fff;
+    padding: 0;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+    transition: background .4s;
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 32px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .logo-mark {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; letter-spacing:-1px;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-size: 1.5rem; font-weight: 700; line-height: 1.2;
+  }
+  .header-text p { font-size: 0.82rem; opacity: .8; margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .norm-select-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .norm-select-wrap label { font-size: .75rem; opacity: .85; font-weight: 500; }
+  select#normSelect {
+    appearance: none;
+    background: rgba(255,255,255,0.15) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: #fff;
+    border-radius: 8px;
+    padding: 9px 36px 9px 14px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 200px;
+    outline: none;
+    transition: border-color .2s, background .2s;
+  }
+  select#normSelect:focus { border-color: rgba(255,255,255,0.7); }
+  select#normSelect option { background: var(--accent-dark); color: #fff; }
+
+  .btn-export {
+    background: #fff;
+    color: var(--accent-dark);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-export:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+  .btn-export svg { width: 16px; height: 16px; }
+
+  /* ===== SCORE BAR ===== */
+  .score-banner {
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .score-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .score-block { display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+  .score-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--gray-400); }
+  .score-value {
+    font-size: 2.4rem; font-weight: 800; line-height: 1;
+    transition: color .4s;
+  }
+  .score-value.high { color: var(--accent); }
+  .score-value.mid  { color: var(--orange); }
+  .score-value.low  { color: var(--red); }
+
+  .progress-wrap { flex: 1; min-width: 200px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: .78rem; color: var(--gray-600); margin-bottom: 6px; }
+  .progress-track {
+    height: 12px; background: var(--gray-200); border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-grad) 100%);
+    transition: width .5s cubic-bezier(.4,0,.2,1), background .4s;
+    width: 0%;
+  }
+  .progress-fill.mid { background: linear-gradient(90deg, var(--orange), #fbbf24); }
+  .progress-fill.low { background: linear-gradient(90deg, var(--red), #f87171); }
+
+  .stats-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .78rem; font-weight: 600; color: var(--gray-600);
+    background: var(--gray-100); border-radius: 99px; padding: 5px 12px;
+  }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-checked { background: var(--accent); }
+  .dot-unchecked { background: var(--gray-300, #d1d5db); }
+  .dot-na { background: var(--orange); }
+
+  /* ===== MAIN ===== */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+
+  .norm-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 24px;
+    background: var(--accent-light);
+    border: 1.5px solid var(--accent-mid);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .norm-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: .82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .norm-info h2 { font-size: 1.05rem; font-weight: 700; color: var(--gray-900); }
+  .norm-info p  { font-size: .82rem; color: var(--gray-600); margin-top: 3px; line-height: 1.5; }
+
+  .toolbar {
+    display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center;
+  }
+  .btn-sm {
+    background: #fff;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .search-wrap { margin-left: auto; position: relative; }
+  .search-wrap input {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 7px;
+    padding: 7px 12px 7px 32px;
+    font-size: .82rem;
+    outline: none;
+    width: 220px;
+    color: var(--gray-700);
+    background: #fff;
+    transition: border-color .15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-icon {
+    position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+    color: var(--gray-400); pointer-events: none;
+  }
+
+  /* ===== CLAUSE SECTIONS ===== */
+  .clause-section { margin-bottom: 14px; }
+
+  .clause-header {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+    user-select: none;
+    position: relative;
+  }
+  .clause-header:hover { border-color: var(--accent-mid); box-shadow: var(--shadow); }
+  .clause-header.open { border-color: var(--accent); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+  .clause-num {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: .8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .clause-title { font-weight: 600; font-size: .95rem; color: var(--gray-900); flex: 1; }
+  .clause-subtitle { font-size: .78rem; color: var(--gray-400); font-weight: 400; margin-top: 1px; }
+
+  .clause-progress-mini {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .mini-bar-track {
+    width: 80px; height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden;
+  }
+  .mini-bar-fill {
+    height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s;
+  }
+  .mini-pct { font-size: .78rem; font-weight: 700; color: var(--accent); min-width: 36px; text-align: right; }
+
+  .chevron {
+    color: var(--gray-400); transition: transform .25s; flex-shrink: 0;
+  }
+  .clause-header.open .chevron { transform: rotate(180deg); }
+
+  .clause-body {
+    display: none;
+    border: 1.5px solid var(--accent);
+    border-top: none;
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+    background: #fff;
+    overflow: hidden;
+  }
+  .clause-body.open { display: block; }
+
+  /* ===== CHECKLIST ITEMS ===== */
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background .12s;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item:hover { background: var(--gray-50); }
+  .checklist-item.checked { background: var(--accent-light); }
+  .checklist-item.na-item { background: #fffbeb; opacity: .75; }
+  .checklist-item.hidden { display: none; }
+
+  .item-check-wrap { padding-top: 1px; flex-shrink: 0; }
+  .item-checkbox {
+    appearance: none;
+    width: 20px; height: 20px;
+    border: 2px solid var(--gray-300, #d1d5db);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+  }
+  .item-checkbox:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .item-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px; top: 2px;
+    width: 6px; height: 10px;
+    border: 2px solid #fff;
+    border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+
+  .item-content { flex: 1; }
+  .item-ref   { font-size: .72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+  .item-text  { font-size: .875rem; color: var(--gray-700); line-height: 1.45; }
+  .item-detail { font-size: .78rem; color: var(--gray-400); margin-top: 3px; font-style: italic; }
+
+  .item-actions { display: flex; gap: 6px; flex-shrink: 0; padding-top: 1px; }
+  .btn-na {
+    font-size: .7rem; font-weight: 600;
+    border: 1.5px solid var(--gray-200);
+    background: #fff;
+    color: var(--gray-400);
+    border-radius: 5px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: border-color .12s, color .12s, background .12s;
+    white-space: nowrap;
+  }
+  .btn-na.active {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: #fffbeb;
+  }
+  .btn-na:hover:not(.active) { border-color: var(--orange); color: var(--orange); }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { background: #fff; }
+    header { background: var(--accent) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .btn-export, .toolbar, .search-wrap, .btn-na { display: none !important; }
+    .clause-body { display: block !important; }
+    .clause-header { cursor: default; }
+    .score-banner, main { box-shadow: none; }
+    .clause-header.open { border-radius: var(--radius) var(--radius) 0 0; }
+    .clause-section { break-inside: avoid; }
+    main { padding: 16px; }
+    .checklist-item { break-inside: avoid; }
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center; padding: 48px 24px; color: var(--gray-400);
+  }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: .9rem; }
+
+  /* ===== FOOTER ===== */
+  .print-footer {
+    display: none;
+    text-align: center;
+    font-size: .75rem;
+    color: var(--gray-400);
+    padding: 12px;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 24px;
+  }
+  @media print { .print-footer { display: block; } }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 680px) {
+    .header-inner { padding: 16px 16px 14px; gap: 12px; }
+    .header-right { margin-left: 0; width: 100%; }
+    select#normSelect { min-width: 0; width: 100%; }
+    main { padding: 16px 12px 40px; }
+    .score-inner { padding: 14px 16px; gap: 16px; }
+    .mini-bar-track { width: 50px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-inner">
+    <div class="logo-mark">CA</div>
+    <div class="header-text">
+      <h1>Checklist Audit</h1>
+      <p>Évaluation de conformité normative en temps réel</p>
+    </div>
+    <div class="header-right">
+      <div class="norm-select-wrap">
+        <label for="normSelect">Norme sélectionnée</label>
+        <select id="normSelect">
+          <option value="iso9001">ISO 9001:2015 – Management Qualité</option>
+          <option value="iatf16949">IATF 16949:2016 – Automobile</option>
+          <option value="iso45001">ISO 45001:2018 – Santé & Sécurité</option>
+        </select>
+      </div>
+      <button class="btn-export" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Exporter PDF
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== SCORE BANNER ===== -->
+<div class="score-banner">
+  <div class="score-inner">
+    <div class="score-block">
+      <span class="score-label">Conformité globale</span>
+      <span class="score-value high" id="scoreValue">0%</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="progressLabel">0 / 0 critères cochés</span>
+        <span id="naLabel">0 N/A exclus</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-pill"><div class="stat-dot dot-checked"></div><span id="statChecked">0 conformes</span></div>
+      <div class="stat-pill"><div class="stat-dot dot-unchecked"></div><span id="statUnchecked">0 non vérifiés</span></div>
+      <div class="stat-pill"><div class="stat-dot dot-na"></div><span id="statNa">0 N/A</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main id="mainContent">
+  <!-- Injected dynamically -->
+</main>
+
+<div class="print-footer" id="printFooter">
+  Généré le <span id="printDate"></span> — Checklist Audit Conformité Normative
+</div>
+
+<script>
+// =====================================================
+// DATA
+// =====================================================
+const NORMS = {
+  iso9001: {
+    code: "ISO 9001",
+    version: "2015",
+    title: "Système de Management de la Qualité",
+    desc: "Spécifie les exigences applicables à un SMQ lorsqu'un organisme souhaite démontrer son aptitude à fournir régulièrement un produit ou service conforme.",
+    clauses: [
+      {
+        num: "4", title: "Contexte de l'organisme", sub: "Compréhension de l'organisme et de son contexte",
+        items: [
+          { ref: "4.1", text: "L'organisme a déterminé les enjeux externes et internes pertinents", detail: "Analyse SWOT, PESTEL ou équivalent documentée" },
+          { ref: "4.2", text: "Les parties intéressées et leurs exigences pertinentes ont été identifiées", detail: "Registre des parties intéressées maintenu à jour" },
+          { ref: "4.3", text: "Le domaine d'application du SMQ est défini et documenté", detail: "Périmètre clairement délimité avec justification des exclusions" },
+          { ref: "4.4", text: "Les processus du SMQ sont établis, mis en œuvre et améliorés", detail: "Cartographie des processus disponible, interactions définies" },
+        ]
+      },
+      {
+        num: "5", title: "Leadership", sub: "Engagement de la direction et politique qualité",
+        items: [
+          { ref: "5.1", text: "La direction démontre son leadership et son engagement envers le SMQ", detail: "Preuves d'implication : revues de direction, allocations ressources" },
+          { ref: "5.1.2", text: "L'orientation client est promue et les exigences client sont prises en compte", detail: "Mécanismes de remontée des retours clients définis" },
+          { ref: "5.2", text: "La politique qualité est établie, communiquée et comprise", detail: "Politique affichée, signée par la DG, accessible à tous" },
+          { ref: "5.3", text: "Les rôles, responsabilités et autorités sont attribués et communiqués", detail: "Organigramme et fiches de poste à jour" },
+        ]
+      },
+      {
+        num: "6", title: "Planification", sub: "Actions face aux risques et opportunités",
+        items: [
+          { ref: "6.1", text: "Les risques et opportunités ont été déterminés et des actions planifiées", detail: "Registre des risques documenté, mise à jour périodique" },
+          { ref: "6.2", text: "Les objectifs qualité sont établis, mesurables et suivis", detail: "Objectifs SMART avec responsables et échéances définis" },
+          { ref: "6.3", text: "La planification des modifications est réalisée de manière maîtrisée", detail: "Processus de gestion du changement documenté" },
+        ]
+      },
+      {
+        num: "7", title: "Support", sub: "Ressources, compétences, communication et information documentée",
+        items: [
+          { ref: "7.1.1", text: "Les ressources nécessaires au SMQ sont déterminées et fournies", detail: "Budget qualité alloué, ressources humaines suffisantes" },
+          { ref: "7.1.6", text: "La connaissance organisationnelle est identifiée et maintenue", detail: "Gestion des savoirs documentée, plan de transfert" },
+          { ref: "7.2", text: "Les compétences nécessaires sont déterminées et les personnes formées", detail: "Plans de formation, évaluations d'efficacité conservées" },
+          { ref: "7.3", text: "Les personnes sont conscientes de leur contribution au SMQ", detail: "Sensibilisation aux objectifs qualité réalisée" },
+          { ref: "7.4", text: "Les communications internes et externes pertinentes sont déterminées", detail: "Plan de communication défini (qui, quoi, quand, comment)" },
+          { ref: "7.5", text: "L'information documentée requise est créée, mise à jour et maîtrisée", detail: "Procédure de maîtrise des documents appliquée" },
+        ]
+      },
+      {
+        num: "8", title: "Réalisation des activités opérationnelles", sub: "Planification, exigences, conception et maîtrise",
+        items: [
+          { ref: "8.1", text: "Les processus opérationnels sont planifiés, mis en œuvre et maîtrisés", detail: "Critères d'acceptation définis, ressources disponibles" },
+          { ref: "8.2", text: "Les exigences relatives aux produits et services sont déterminées", detail: "Revue des exigences avant acceptation commande/contrat" },
+          { ref: "8.3", text: "Le processus de conception et développement est maîtrisé", detail: "Jalons de revue, vérification et validation documentés" },
+          { ref: "8.4", text: "Les processus, produits et services fournis en externe sont maîtrisés", detail: "Qualification fournisseurs, évaluation et réévaluation réalisées" },
+          { ref: "8.5", text: "La production et la prestation de service sont maîtrisées", detail: "Instructions de travail disponibles, traçabilité assurée" },
+          { ref: "8.6", text: "La libération des produits et services est réalisée selon les critères définis", detail: "Preuves de conformité conservées, autorisation identifiée" },
+          { ref: "8.7", text: "Les éléments de sortie non conformes sont identifiés et maîtrisés", detail: "Procédure NC appliquée, registre tenu à jour" },
+        ]
+      },
+      {
+        num: "9", title: "Évaluation des performances", sub: "Surveillance, mesure, analyse et revue de direction",
+        items: [
+          { ref: "9.1", text: "La surveillance, la mesure, l'analyse et l'évaluation sont réalisées", detail: "Indicateurs définis, fréquence de mesure planifiée" },
+          { ref: "9.1.2", text: "La satisfaction client est surveillée et analysée", detail: "Enquêtes, réclamations, NPS ou équivalent suivi" },
+          { ref: "9.2", text: "Des audits internes sont planifiés et réalisés selon programme", detail: "Programme d'audit annuel, auditeurs qualifiés, rapports conservés" },
+          { ref: "9.3", text: "La revue de direction est réalisée et les décisions enregistrées", detail: "PV de revue avec entrées obligatoires et actions de sortie" },
+        ]
+      },
+      {
+        num: "10", title: "Amélioration", sub: "Non-conformités, actions correctives et amélioration continue",
+        items: [
+          { ref: "10.1", text: "Les opportunités d'amélioration sont déterminées et sélectionnées", detail: "Actions d'amélioration identifiées et prioritarisées" },
+          { ref: "10.2", text: "Les non-conformités sont traitées et des actions correctives mises en œuvre", detail: "Analyse des causes, plan d'action, vérification d'efficacité" },
+          { ref: "10.3", text: "L'amélioration continue du SMQ est poursuivie", detail: "Tendances des indicateurs en amélioration, objectifs révisés" },
+        ]
+      }
+    ]
+  },
+
+  iatf16949: {
+    code: "IATF 16949",
+    version: "2016",
+    title: "Système de Management Qualité Automobile",
+    desc: "Exigences particulières pour l'application de l'ISO 9001:2015 dans la filière automobile. Intègre les exigences spécifiques clients (CSR) et les Core Tools.",
+    clauses: [
+      {
+        num: "4", title: "Contexte de l'organisme", sub: "Enjeux spécifiques industrie automobile",
+        items: [
+          { ref: "4.3.1", text: "Le domaine d'application inclut l'ensemble du site de fabrication", detail: "Site manufacturing intégré dans le scope, exclusions justifiées" },
+          { ref: "4.3.2", text: "Les exigences spécifiques clients (CSR) sont identifiées et intégrées", detail: "Matrice CSR documentée pour chaque client OEM" },
+          { ref: "4.4.1.1", text: "La conformité aux produits et processus est intégrée à l'approche processus", detail: "Conformité légale, réglementaire et client intégrée au SMQ" },
+          { ref: "4.4.1.2", text: "La connaissance des produits est maintenue et protégée", detail: "Propriété intellectuelle et données techniques sécurisées" },
+        ]
+      },
+      {
+        num: "5", title: "Leadership automobile", sub: "Responsabilité corporative et politique qualité produit",
+        items: [
+          { ref: "5.1.1.1", text: "La direction s'engage sur la responsabilité produit et la sécurité", detail: "Engagement documenté sur la sécurité des produits livrés" },
+          { ref: "5.2.1", text: "La politique qualité inclut les objectifs de qualité produit", detail: "Objectifs PPM, FTQ, livraison intégrés dans la politique" },
+          { ref: "5.3.1", text: "Les responsabilités en qualité et performance sont définies", detail: "Quality Manager avec autorité stop production identifié" },
+          { ref: "5.3.2", text: "Un responsable qualité client est désigné", detail: "Customer Quality representative formé et identifié" },
+        ]
+      },
+      {
+        num: "6", title: "Planification IATF", sub: "Gestion des risques et AMDEC Système",
+        items: [
+          { ref: "6.1.2.1", text: "L'analyse des risques qualité produit est réalisée (FMEA, etc.)", detail: "AMDEC Processus à jour pour tous les processus critiques" },
+          { ref: "6.1.2.2", text: "Le plan de prévention des risques est documenté", detail: "Actions préventives issues de l'analyse de risques en place" },
+          { ref: "6.2.2.1", text: "Les objectifs qualité sont déclinés jusqu'à l'atelier", detail: "Cascading des objectifs jusqu'aux opérateurs (hoshin kanri)" },
+        ]
+      },
+      {
+        num: "7", title: "Support et Core Tools", sub: "Compétences, infrastructure et Core Tools AIAG",
+        items: [
+          { ref: "7.1.3.1", text: "La planification des installations est réalisée (ergonomie, sécurité)", detail: "Layout validé, postes conformes aux exigences ergonomiques" },
+          { ref: "7.2.1", text: "Les compétences aux Core Tools sont vérifiées (APQP, PPAP, SPC, MSA, FMEA)", detail: "Formation et qualification aux 5 Core Tools AIAG attestées" },
+          { ref: "7.2.2", text: "La formation interne est structurée avec OJT et évaluation", detail: "On-the-job training documenté, matrices compétences à jour" },
+          { ref: "7.2.3", text: "Les auditeurs internes sont qualifiés pour les process et produits", detail: "Auditeurs internes certifiés selon exigences IATF" },
+          { ref: "7.5.3.2.1", text: "La maîtrise des enregistrements qualité inclut les données de production", detail: "Traçabilité complète des lots, paramètres process enregistrés" },
+        ]
+      },
+      {
+        num: "8", title: "Réalisation – Exigences Automobile", sub: "APQP, PPAP, maîtrise process et livraison",
+        items: [
+          { ref: "8.2.3.1", text: "Les revues de faisabilité technique sont réalisées avant acceptation", detail: "Checklist faisabilité manufacturière documentée et approuvée" },
+          { ref: "8.3.3.1", text: "L'APQP est appliqué avec équipe multidisciplinaire", detail: "Phases APQP documentées, jalons approuvés par le client" },
+          { ref: "8.3.4.4", text: "Le plan de surveillance (Control Plan) est établi et maintenu", detail: "Control Plan validé client, couvrant toutes caractéristiques spéciales" },
+          { ref: "8.6.2", text: "Le PPAP est réalisé et approuvé avant démarrage série", detail: "Niveau PPAP défini et approuvé, PSW signé client" },
+          { ref: "8.5.1.2", text: "Les plans de surveillance sont appliqués aux opérations", detail: "Instructions de travail conformes au Control Plan" },
+          { ref: "8.5.6.1", text: "Le processus de gestion du changement inclut un re-PPAP si requis", detail: "Évaluation d'impact du changement, notification client documentée" },
+          { ref: "8.7.1.2", text: "La gestion des produits non conformes inclut le tri et la dérogation", detail: "Processus MRB (Material Review Board) documenté et appliqué" },
+          { ref: "8.7.1.4", text: "Les retouches et réparations sont maîtrisées", detail: "Instructions spécifiques retouche, re-inspection systématique" },
+        ]
+      },
+      {
+        num: "9", title: "Évaluation des performances IATF", sub: "Surveillance, audits et indicateurs automobile",
+        items: [
+          { ref: "9.1.1.1", text: "Les indicateurs MSA (R&R) sont réalisés pour les moyens de mesure", detail: "Études Gauge R&R ou Plan MSA réalisées, résultats acceptables" },
+          { ref: "9.1.1.2", text: "Les indicateurs SPC sont utilisés pour les caractéristiques spéciales", detail: "Cartes de contrôle tenues, Cpk ≥ 1.67 pour CS" },
+          { ref: "9.1.1.3", text: "Les indicateurs de performance de fabrication sont suivis", detail: "OEE, FTQ, PPM internes et clients suivis mensuellement" },
+          { ref: "9.2.2.1", text: "Les audits de processus manufacturing sont planifiés et réalisés", detail: "Audits VDA 6.3 ou LPA couvrant tous les processus clés" },
+          { ref: "9.2.2.2", text: "Les audits produits sont réalisés selon fréquence définie", detail: "Audit produit fini (VDA 6.5 ou audit final) réalisé" },
+          { ref: "9.3.2.1", text: "La revue de direction inclut les indicateurs qualité automobile", detail: "PPM client, réclamations, livraison OTD analysés en revue" },
+        ]
+      },
+      {
+        num: "10", title: "Amélioration – Automobile", sub: "8D, analyse des défaillances et amélioration continue",
+        items: [
+          { ref: "10.2.3", text: "Les problèmes qualité font l'objet d'une résolution structurée (8D)", detail: "Rapports 8D clôturés avec validation client, leçons apprises" },
+          { ref: "10.2.4", text: "Les erreurs répétitives font l'objet de démarches de réduction", detail: "Analyse de tendances, objectifs de réduction des NC récurrentes" },
+          { ref: "10.2.5", text: "Les retours de garantie sont analysés et des actions menées", detail: "Processus de gestion des garanties et retours du terrain actif" },
+          { ref: "10.3.1", text: "L'amélioration continue est structurée et inclut les Core Tools", detail: "Kaizen, Lean, Six Sigma ou équivalent déployé sur le site" },
+        ]
+      }
+    ]
+  },
+
+  iso45001: {
+    code: "ISO 45001",
+    version: "2018",
+    title: "Management de la Santé et Sécurité au Travail",
+    desc: "Spécifie les exigences d'un système de management SST pour permettre à un organisme de prévenir les blessures et pathologies liées au travail.",
+    clauses: [
+      {
+        num: "4", title: "Contexte de l'organisme", sub: "Enjeux SST et parties intéressées",
+        items: [
+          { ref: "4.1", text: "Les enjeux internes et externes affectant la SST sont déterminés", detail: "Analyse du contexte incluant contraintes légales, réglementaires, technologiques" },
+          { ref: "4.2", text: "Les besoins et attentes des travailleurs et parties intéressées sont identifiés", detail: "Représentants du personnel consultés, CSE/CSSCT impliqué" },
+          { ref: "4.3", text: "Le domaine d'application du SMS SST est défini", detail: "Périmètre géographique, activités et travailleurs couverts documentés" },
+          { ref: "4.4", text: "Le système de management SST est établi et tenu à jour", detail: "Politique, objectifs, processus intégrés au système de management" },
+        ]
+      },
+      {
+        num: "5", title: "Leadership et participation des travailleurs", sub: "Engagement direction et consultation",
+        items: [
+          { ref: "5.1", text: "La direction démontre son leadership sur la SST", detail: "Engagement visible : tours terrain, sécurité en réunion, ressources allouées" },
+          { ref: "5.2", text: "La politique SST est établie, communiquée et maintenue", detail: "Politique signée, affichée, traduite si nécessaire" },
+          { ref: "5.3", text: "Les rôles et responsabilités SST sont assignés", detail: "RACI SST documenté, responsable SST désigné avec autorité" },
+          { ref: "5.4", text: "Les travailleurs sont consultés et participent activement à la SST", detail: "Mécanismes de consultation fonctionnels (CCH, remontées terrain, etc.)" },
+        ]
+      },
+      {
+        num: "6", title: "Planification", sub: "Appréciation des risques SST et opportunités",
+        items: [
+          { ref: "6.1.1", text: "Les risques SST, les dangers et les opportunités sont déterminés", detail: "Processus d'identification des dangers formalisé et appliqué" },
+          { ref: "6.1.2.1", text: "Les dangers sont identifiés de manière proactive et systématique", detail: "Analyse des tâches, historique AT/MP, inspection terrain réalisés" },
+          { ref: "6.1.2.2", text: "L'appréciation des risques SST est réalisée et documentée", detail: "Évaluation des risques professionnels (DU) mise à jour annuellement" },
+          { ref: "6.1.3", text: "Les exigences légales et autres exigences applicables sont déterminées", detail: "Veille réglementaire active, conformité vérifiée et documentée" },
+          { ref: "6.2", text: "Les objectifs SST sont établis, mesurables et cohérents avec la politique", detail: "Objectifs SMART avec plans d'action, responsables et ressources" },
+        ]
+      },
+      {
+        num: "7", title: "Support", sub: "Ressources, compétences, communication SST",
+        items: [
+          { ref: "7.1", text: "Les ressources nécessaires au SMS SST sont fournies", detail: "Budget SST alloué, EPI disponibles, équipements conformes" },
+          { ref: "7.2", text: "Les compétences SST des travailleurs sont déterminées et assurées", detail: "Habilitations, formations réglementaires à jour (secourisme, CACES, etc.)" },
+          { ref: "7.3", text: "Les travailleurs sont sensibilisés à la politique et aux risques SST", detail: "Accueil sécurité, causeries sécurité, affichage réalisés" },
+          { ref: "7.4", text: "La communication interne et externe sur la SST est maîtrisée", detail: "Canaux de communication SST définis, remontées d'information actives" },
+          { ref: "7.5", text: "L'information documentée SST est créée, maîtrisée et conservée", detail: "DU, plans d'urgence, fiches de données sécurité accessibles" },
+        ]
+      },
+      {
+        num: "8", title: "Réalisation des activités opérationnelles", sub: "Maîtrise des risques, MOC et situations d'urgence",
+        items: [
+          { ref: "8.1.1", text: "Les mesures de maîtrise des risques sont planifiées selon la hiérarchie", detail: "Hiérarchie des contrôles appliquée (élimination → EPI)" },
+          { ref: "8.1.2", text: "La gestion du changement inclut l'évaluation des risques SST", detail: "MOC (Management Of Change) incluant impact SST documenté" },
+          { ref: "8.1.3", text: "Les achats sont contrôlés pour leur conformité SST", detail: "Spécifications SST incluses dans les cahiers des charges fournisseurs" },
+          { ref: "8.1.4", text: "Les prestataires et sous-traitants sont maîtrisés", detail: "Plan de prévention ou PPSPS établi, coordination sécurité réalisée" },
+          { ref: "8.2", text: "La préparation et la réponse aux situations d'urgence sont planifiées", detail: "Plans d'urgence documentés, exercices d'évacuation réalisés" },
+        ]
+      },
+      {
+        num: "9", title: "Évaluation des performances", sub: "Surveillance, audits et revue de direction SST",
+        items: [
+          { ref: "9.1.1", text: "La surveillance et la mesure des performances SST sont réalisées", detail: "Indicateurs réactifs (AT, MP) et proactifs (quasi-accidents, visites) suivis" },
+          { ref: "9.1.2", text: "L'évaluation de la conformité aux exigences légales est réalisée", detail: "Audit de conformité réglementaire périodique documenté" },
+          { ref: "9.2.1", text: "Le programme d'audit interne SST est établi et mis en œuvre", detail: "Audits couvrant l'ensemble des processus et lieux de travail" },
+          { ref: "9.3", text: "La revue de direction SST est réalisée avec les entrées requises", detail: "PV incluant accidents, conformité légale, objectifs et ressources" },
+        ]
+      },
+      {
+        num: "10", title: "Amélioration", sub: "Incidents, non-conformités et amélioration continue",
+        items: [
+          { ref: "10.1", text: "Les opportunités d'amélioration SST sont déterminées et traitées", detail: "Actions préventives issues d'inspections terrain et analyse de risques" },
+          { ref: "10.2", text: "Les incidents, non-conformités et actions correctives sont gérés", detail: "Procédure déclaration/analyse incidents appliquée, arbre des causes réalisé" },
+          { ref: "10.2.2", text: "Les causes profondes des incidents sont identifiées et traitées", detail: "Méthodes d'analyse (5 pourquoi, Ishikawa) utilisées et documentées" },
+          { ref: "10.3", text: "L'amélioration continue du SMS SST est démontrée", detail: "Tendances des indicateurs, bilan actions, culture sécurité mesurée" },
+        ]
+      }
+    ]
+  }
+};
+
+// =====================================================
+// STATE
+// =====================================================
+let currentNorm = 'iso9001';
+let state = {}; // { "ref": "checked"|"na"|"unchecked" }
+
+function initState(normKey) {
+  state = {};
+  const norm = NORMS[normKey];
+  norm.clauses.forEach(c => c.items.forEach(i => { state[i.ref] = 'unchecked'; }));
+}
+
+// =====================================================
+// SCORE CALCULATION
+// =====================================================
+function calcScore() {
+  const all = Object.keys(state);
+  const naItems = all.filter(k => state[k] === 'na');
+  const checked = all.filter(k => state[k] === 'checked');
+  const active = all.length - naItems.length;
+  const pct = active === 0 ? 0 : Math.round((checked.length / active) * 100);
+  return { total: all.length, na: naItems.length, checked: checked.length, active, pct };
+}
+
+function updateScore() {
+  const { total, na, checked, active, pct } = calcScore();
+  const unchecked = active - checked;
+
+  // Big score
+  const sv = document.getElementById('scoreValue');
+  sv.textContent = pct + '%';
+  sv.className = 'score-value ' + (pct >= 80 ? 'high' : pct >= 50 ? 'mid' : 'low');
+
+  // Progress bar
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill ' + (pct >= 80 ? '' : pct >= 50 ? 'mid' : 'low');
+
+  document.getElementById('progressLabel').textContent = `${checked} / ${active} critères cochés`;
+  document.getElementById('naLabel').textContent = na + ' N/A exclus';
+  document.getElementById('statChecked').textContent = checked + ' conformes';
+  document.getElementById('statUnchecked').textContent = unchecked + ' non vérifiés';
+  document.getElementById('statNa').textContent = na + ' N/A';
+
+  // Update per-clause mini bars
+  const norm = NORMS[currentNorm];
+  norm.clauses.forEach(c => {
+    const cItems = c.items.map(i => state[i.ref]);
+    const cNa = cItems.filter(s => s === 'na').length;
+    const cChecked = cItems.filter(s => s === 'checked').length;
+    const cActive = c.items.length - cNa;
+    const cPct = cActive === 0 ? 0 : Math.round((cChecked / cActive) * 100);
+    const bar = document.getElementById('mini-fill-' + c.num);
+    const label = document.getElementById('mini-pct-' + c.num);
+    if (bar) bar.style.width = cPct + '%';
+    if (label) label.textContent = cPct + '%';
+  });
+}
+
+// =====================================================
+// RENDER
+// =====================================================
+function render(normKey) {
+  const norm = NORMS[normKey];
+  const main = document.getElementById('mainContent');
+
+  let html = `
+    <div class="norm-header">
+      <div class="norm-badge">${norm.code}:${norm.version}</div>
+      <div class="norm-info">
+        <h2>${norm.title}</h2>
+        <p>${norm.desc}</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn-sm" onclick="checkAll()">Tout cocher</button>
+      <button class="btn-sm" onclick="uncheckAll()">Tout décocher</button>
+      <button class="btn-sm" onclick="toggleAllSections(true)">Développer tout</button>
+      <button class="btn-sm" onclick="toggleAllSections(false)">Réduire tout</button>
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Rechercher un critère…" oninput="filterItems(this.value)">
+      </div>
+    </div>`;
+
+  norm.clauses.forEach((clause, ci) => {
+    html += `
+    <div class="clause-section" id="section-${clause.num}">
+      <div class="clause-header" onclick="toggleSection('${clause.num}', this)" id="hdr-${clause.num}">
+        <span class="clause-num">${clause.num}</span>
+        <div style="flex:1">
+          <div class="clause-title">${clause.title}</div>
+          <div class="clause-subtitle">${clause.sub}</div>
+        </div>
+        <div class="clause-progress-mini">
+          <div class="mini-bar-track"><div class="mini-bar-fill" id="mini-fill-${clause.num}" style="width:0%"></div></div>
+          <span class="mini-pct" id="mini-pct-${clause.num}">0%</span>
+        </div>
+        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="clause-body" id="body-${clause.num}">`;
+
+    clause.items.forEach(item => {
+      html += `
+        <div class="checklist-item" id="item-${item.ref.replace(/\./g,'-')}">
+          <div class="item-check-wrap">
+            <input type="checkbox" class="item-checkbox" id="chk-${item.ref.replace(/\./g,'-')}"
+              onchange="handleCheck('${item.ref}', this.checked)">
+          </div>
+          <div class="item-content">
+            <div class="item-ref">${item.ref}</div>
+            <label class="item-text" for="chk-${item.ref.replace(/\./g,'-')}">${item.text}</label>
+            <div class="item-detail">${item.detail}</div>
+          </div>
+          <div class="item-actions">
+            <button class="btn-na" id="na-${item.ref.replace(/\./g,'-')}" onclick="handleNA('${item.ref}')">N/A</button>
+          </div>
+        </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  main.innerHTML = html;
+  updateScore();
+}
+
+// =====================================================
+// INTERACTIONS
+// =====================================================
+function toggleSection(num, headerEl) {
+  const body = document.getElementById('body-' + num);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  headerEl.classList.toggle('open', !isOpen);
+}
+
+function toggleAllSections(open) {
+  const norm = NORMS[currentNorm];
+  norm.clauses.forEach(c => {
+    const body = document.getElementById('body-' + c.num);
+    const hdr  = document.getElementById('hdr-' + c.num);
+    if (body) body.classList.toggle('open', open);
+    if (hdr)  hdr.classList.toggle('open', open);
+  });
+}
+
+function handleCheck(ref, checked) {
+  state[ref] = checked ? 'checked' : 'unchecked';
+  const itemEl = document.getElementById('item-' + ref.replace(/\./g,'-'));
+  if (itemEl) {
+    itemEl.classList.toggle('checked', checked);
+    // Remove NA if checking
+    if (checked) {
+      itemEl.classList.remove('na-item');
+      const naBtn = document.getElementById('na-' + ref.replace(/\./g,'-'));
+      if (naBtn) naBtn.classList.remove('active');
+    }
+  }
+  updateScore();
+}
+
+function handleNA(ref) {
+  const refId = ref.replace(/\./g,'-');
+  const itemEl = document.getElementById('item-' + refId);
+  const naBtn  = document.getElementById('na-' + refId);
+  const chk    = document.getElementById('chk-' + refId);
+
+  if (state[ref] === 'na') {
+    state[ref] = 'unchecked';
+    itemEl && itemEl.classList.remove('na-item');
+    naBtn  && naBtn.classList.remove('active');
+  } else {
+    state[ref] = 'na';
+    chk && (chk.checked = false);
+    itemEl && itemEl.classList.add('na-item');
+    itemEl && itemEl.classList.remove('checked');
+    naBtn  && naBtn.classList.add('active');
+  }
+  updateScore();
+}
+
+function checkAll() {
+  const norm = NORMS[currentNorm];
+  norm.clauses.forEach(c => c.items.forEach(i => {
+    if (state[i.ref] !== 'na') {
+      state[i.ref] = 'checked';
+      const chk = document.getElementById('chk-' + i.ref.replace(/\./g,'-'));
+      if (chk) chk.checked = true;
+      const el = document.getElementById('item-' + i.ref.replace(/\./g,'-'));
+      if (el) { el.classList.add('checked'); el.classList.remove('na-item'); }
+    }
+  }));
+  updateScore();
+}
+
+function uncheckAll() {
+  const norm = NORMS[currentNorm];
+  norm.clauses.forEach(c => c.items.forEach(i => {
+    state[i.ref] = 'unchecked';
+    const chk = document.getElementById('chk-' + i.ref.replace(/\./g,'-'));
+    if (chk) chk.checked = false;
+    const el = document.getElementById('item-' + i.ref.replace(/\./g,'-'));
+    if (el) { el.classList.remove('checked', 'na-item'); }
+    const naBtn = document.getElementById('na-' + i.ref.replace(/\./g,'-'));
+    if (naBtn) naBtn.classList.remove('active');
+  }));
+  updateScore();
+}
+
+function filterItems(query) {
+  const q = query.toLowerCase().trim();
+  const norm = NORMS[currentNorm];
+  norm.clauses.forEach(c => {
+    let anyVisible = false;
+    c.items.forEach(i => {
+      const el = document.getElementById('item-' + i.ref.replace(/\./g,'-'));
+      if (!el) return;
+      const matches = !q || i.ref.toLowerCase().includes(q) || i.text.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q);
+      el.classList.toggle('hidden', !matches);
+      if (matches) anyVisible = true;
+    });
+    // Auto-open sections with matches
+    if (q && anyVisible) {
+      const body = document.getElementById('body-' + c.num);
+      const hdr  = document.getElementById('hdr-' + c.num);
+      if (body) body.classList.add('open');
+      if (hdr)  hdr.classList.add('open');
+    }
+  });
+}
+
+// =====================================================
+// NORM CHANGE
+// =====================================================
+document.getElementById('normSelect').addEventListener('change', function() {
+  currentNorm = this.value;
+  applyTheme(currentNorm);
+  initState(currentNorm);
+  render(currentNorm);
+});
+
+// =====================================================
+// PRINT DATE
+// =====================================================
+document.getElementById('printDate').textContent = new Date().toLocaleDateString('fr-FR', {
+  day: '2-digit', month: 'long', year: 'numeric'
+});
+
+// =====================================================
+// THEMES – une couleur par norme
+// =====================================================
+const THEMES = {
+  iso9001: {
+    accent:      '#1D9E75',
+    accentDark:  '#157a5a',
+    accentLight: '#e8f7f2',
+    accentMid:   '#b2e4d4',
+    accentGrad:  '#2dd4a0',
+  },
+  iatf16949: {
+    accent:      '#2563EB',
+    accentDark:  '#1d4ed8',
+    accentLight: '#eff6ff',
+    accentMid:   '#bfdbfe',
+    accentGrad:  '#60a5fa',
+  },
+  iso45001: {
+    accent:      '#DC2626',
+    accentDark:  '#b91c1c',
+    accentLight: '#fef2f2',
+    accentMid:   '#fecaca',
+    accentGrad:  '#f87171',
+  }
+};
+
+function applyTheme(normKey) {
+  const t = THEMES[normKey];
+  const r = document.documentElement.style;
+  r.setProperty('--accent',       t.accent);
+  r.setProperty('--accent-dark',  t.accentDark);
+  r.setProperty('--accent-light', t.accentLight);
+  r.setProperty('--accent-mid',   t.accentMid);
+  r.setProperty('--accent-grad',  t.accentGrad);
+}
+
+// =====================================================
+// BOOT
+// =====================================================
+applyTheme(currentNorm);
+initState(currentNorm);
+render(currentNorm);
+</script>
+</body>
+</html>
